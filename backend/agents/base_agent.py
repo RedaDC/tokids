@@ -9,10 +9,22 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from app.core.config import settings
-from app.models.agent import AgentStatus
-
 logger = logging.getLogger(__name__)
+
+try:
+    from app.core.config import settings as _settings
+except Exception:
+    _settings = None  # type: ignore
+
+try:
+    from app.models.agent import AgentStatus
+except Exception:
+    import enum
+    class AgentStatus(str, enum.Enum):  # type: ignore
+        IDLE = "idle"
+        WORKING = "working"
+        COMPLETED = "completed"
+        FAILED = "failed"
 
 
 @dataclass
@@ -49,8 +61,10 @@ class RealLLMClient:
 
     def __init__(self, provider: str = "openai"):
         self.provider = provider
-        self.openai_key = settings.OPENAI_API_KEY
-        self.anthropic_key = settings.ANTHROPIC_API_KEY
+        openai_key = _settings.OPENAI_API_KEY if _settings else ""
+        anthropic_key = _settings.ANTHROPIC_API_KEY if _settings else ""
+        self.openai_key = openai_key
+        self.anthropic_key = anthropic_key
 
     async def complete(self, prompt: str, system: Optional[str] = None) -> str:
         if self.provider == "anthropic" and self.anthropic_key:
@@ -58,7 +72,7 @@ class RealLLMClient:
             client = AsyncAnthropic(api_key=self.anthropic_key)
             messages = [{"role": "user", "content": prompt}]
             kwargs: dict[str, Any] = {
-                "model": settings.ANTHROPIC_MODEL,
+                "model": _settings.ANTHROPIC_MODEL if _settings else "claude-3-5-sonnet-20241022",
                 "max_tokens": 2048,
                 "messages": messages,
             }
@@ -75,9 +89,9 @@ class RealLLMClient:
                 messages.append({"role": "system", "content": system})
             messages.append({"role": "user", "content": prompt})
             resp = await client.chat.completions.create(
-                model=settings.OPENAI_MODEL,
+                model=_settings.OPENAI_MODEL if _settings else "gpt-4o",
                 messages=messages,
-                max_tokens=settings.OPENAI_MAX_TOKENS,
+                max_tokens=_settings.OPENAI_MAX_TOKENS if _settings else 4096,
             )
             return resp.choices[0].message.content or ""
 
@@ -139,10 +153,64 @@ class BaseAgent(ABC):
         self.tokens_used += tokens
 
     def get_llm_client(self) -> Any:
-        """Return configured LLM client or stub client."""
-        if settings.is_stub_mode or (not settings.OPENAI_API_KEY and not settings.ANTHROPIC_API_KEY):
+        """Return configured LLM client or stub client (public method)."""
+        is_stub = (not _settings) or getattr(_settings, "is_stub_mode", True)
+        openai_key = _settings.OPENAI_API_KEY if _settings else ""
+        anthropic_key = _settings.ANTHROPIC_API_KEY if _settings else ""
+        if is_stub or (not openai_key and not anthropic_key):
             return StubLLMClient()
-        return RealLLMClient(provider=settings.LLM_PROVIDER)
+        provider = _settings.LLM_PROVIDER if _settings else "openai"
+        return RealLLMClient(provider=provider)
+
+    # Alias used by agents.py monolithic-style agents
+    def _get_llm_client(self) -> Any:
+        return self.get_llm_client()
+
+    @property
+    def _is_stub(self) -> bool:
+        """True when running without real API keys configured."""
+        client = self.get_llm_client()
+        return isinstance(client, StubLLMClient)
+
+    def _log_activity(self, message: str, level: str = "info", **kwargs: Any) -> None:
+        """Log activity (wrapper used by agents.py agents)."""
+        self.log(message, level=level)
+
+    async def execute_with_tracking(self, task_input: dict[str, Any]) -> "AgentResult":
+        """Execute with timing and cost tracking."""
+        start = time.time()
+        try:
+            result = await self.execute(task_input)
+            result.execution_time_ms = (time.time() - start) * 1000
+            self.track_cost(result.cost_usd, result.tokens_used)
+            return result
+        except Exception as e:
+            elapsed = (time.time() - start) * 1000
+            self.log(f"Agent execution error: {e}", level="error")
+            return AgentResult(
+                success=False,
+                output={},
+                error=str(e),
+                execution_time_ms=elapsed,
+            )
+
+    async def _call_llm(
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        response_format: str = "text",
+    ) -> dict[str, Any]:
+        """Call LLM and return structured result dict."""
+        client = self.get_llm_client()
+        try:
+            if response_format == "json":
+                data = await client.generate_json(prompt, system=system_prompt)
+                return {"content": json.dumps(data) if isinstance(data, dict) else data, "raw": data}
+            else:
+                text = await client.complete(prompt, system=system_prompt)
+                return {"content": text}
+        except Exception as e:
+            return {"content": "{}", "error": str(e)}
 
     @abstractmethod
     async def execute(self, task_input: dict[str, Any]) -> AgentResult:

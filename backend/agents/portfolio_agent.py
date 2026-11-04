@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
-from agents.base_agent import AgentResult, BaseAgent
+from .base_agent import AgentResult, BaseAgent
 from app.models.agent import AgentStatus
 from app.services.storage_service import storage_service
 from image_processing.processor import processor

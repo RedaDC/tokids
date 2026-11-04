@@ -1,16 +1,16 @@
 """
 TeeDesign AI — Autonomous Production Agents Package
 """
-from agents.base_agent import BaseAgent, AgentResult, StubLLMClient
-from agents.ceo_agent import CEOAgent
-from agents.research_agent import ResearchAgent
-from agents.creative_agent import CreativeAgent
-from agents.generator_agent import GeneratorAgent
-from agents.quality_agent import QualityAgent
-from agents.compliance_agent import ComplianceAgent
-from agents.seo_agent import SEOAgent
-from agents.portfolio_agent import PortfolioAgent, ExportPackage
-from agents.analytics_agent import AnalyticsAgent
+from .base_agent import BaseAgent, AgentResult, StubLLMClient
+from .ceo_agent import CEOAgent
+from .research_agent import ResearchAgent
+from .creative_agent import CreativeAgent
+from .generator_agent import GeneratorAgent
+from .quality_agent import QualityAgent
+from .compliance_agent import ComplianceAgent
+from .seo_agent import SEOAgent
+from .portfolio_agent import PortfolioAgent, ExportPackage
+from .analytics_agent import AnalyticsAgent
 
 __all__ = [
     "BaseAgent",

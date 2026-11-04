@@ -3,7 +3,7 @@ TeeDesign AI — Market Research Specialist Agent
 """
 import time
 from typing import Any
-from agents.base_agent import AgentResult, BaseAgent
+from .base_agent import AgentResult, BaseAgent
 from app.models.agent import AgentStatus
 
 

@@ -5,7 +5,7 @@ import time
 import uuid
 from pathlib import Path
 from typing import Any
-from agents.base_agent import AgentResult, BaseAgent
+from .base_agent import AgentResult, BaseAgent
 from app.core.config import settings
 from app.models.agent import AgentStatus
 from image_processing.factory import get_image_provider

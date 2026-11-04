@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 from PIL import Image, ImageFilter, ImageStat
 
-from agents.base_agent import AgentResult, BaseAgent
+from .base_agent import AgentResult, BaseAgent
 from app.core.config import settings
 from app.models.agent import AgentStatus
 from image_processing.processor import processor
