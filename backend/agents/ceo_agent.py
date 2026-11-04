@@ -3,8 +3,10 @@ TeeDesign AI — CEO Orchestrator Agent
 """
 import time
 from typing import Any, Optional
-from .base_agent import AgentResult, BaseAgent
-from app.models.agent import AgentStatus
+try:
+    from .base_agent import AgentResult, BaseAgent, AgentStatus
+except (ImportError, ValueError):
+    from base_agent import AgentResult, BaseAgent, AgentStatus
 
 
 class CEOAgent(BaseAgent):

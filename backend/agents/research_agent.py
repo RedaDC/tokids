@@ -3,8 +3,10 @@ TeeDesign AI — Market Research Specialist Agent
 """
 import time
 from typing import Any
-from .base_agent import AgentResult, BaseAgent
-from app.models.agent import AgentStatus
+try:
+    from .base_agent import AgentResult, BaseAgent, AgentStatus
+except (ImportError, ValueError):
+    from base_agent import AgentResult, BaseAgent, AgentStatus
 
 
 class ResearchAgent(BaseAgent):

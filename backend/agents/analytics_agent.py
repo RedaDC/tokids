@@ -3,8 +3,10 @@ TeeDesign AI — Analytics & Performance Insights Agent
 """
 import time
 from typing import Any, Optional
-from .base_agent import AgentResult, BaseAgent
-from app.models.agent import AgentStatus
+try:
+    from .base_agent import AgentResult, BaseAgent, AgentStatus
+except (ImportError, ValueError):
+    from base_agent import AgentResult, BaseAgent, AgentStatus
 
 
 class AnalyticsAgent(BaseAgent):

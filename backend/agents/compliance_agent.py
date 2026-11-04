@@ -4,9 +4,19 @@ TeeDesign AI — Copyright & Trademark Compliance Agent
 import re
 import time
 from typing import Any
-from .base_agent import AgentResult, BaseAgent
-from app.models.agent import AgentStatus
-from app.models.quality import ComplianceRiskLevel
+try:
+    from .base_agent import AgentResult, BaseAgent, AgentStatus
+except (ImportError, ValueError):
+    from base_agent import AgentResult, BaseAgent, AgentStatus
+try:
+    from app.models.quality import ComplianceRiskLevel
+except Exception:
+    import enum
+    class ComplianceRiskLevel(str, enum.Enum):  # type: ignore
+        LOW = "low"
+        MEDIUM = "medium"
+        HIGH = "high"
+        CRITICAL = "critical"
 
 # High-risk IP terms frequently subject to takedown notices on POD marketplaces
 FLAGGED_IP_PATTERNS = [

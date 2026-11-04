@@ -5,12 +5,26 @@ import time
 import uuid
 from pathlib import Path
 from typing import Any
-from .base_agent import AgentResult, BaseAgent
-from app.core.config import settings
-from app.models.agent import AgentStatus
-from image_processing.factory import get_image_provider
-from image_processing.processor import processor
-from app.services.storage_service import storage_service
+try:
+    from .base_agent import AgentResult, BaseAgent, AgentStatus
+except (ImportError, ValueError):
+    from base_agent import AgentResult, BaseAgent, AgentStatus
+try:
+    from app.core.config import settings
+except Exception:
+    settings = None
+
+try:
+    from image_processing.factory import get_image_provider
+    from image_processing.processor import processor
+except Exception:
+    get_image_provider = None
+    processor = None
+
+try:
+    from app.services.storage_service import storage_service
+except Exception:
+    storage_service = None
 
 
 class GeneratorAgent(BaseAgent):
